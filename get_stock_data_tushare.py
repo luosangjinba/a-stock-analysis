@@ -1,5 +1,5 @@
 """
-A股20日涨幅榜数据获取脚本（使用Tushare - 稳定版）
+A股20日涨幅榜数据获取脚本（使用Tushare）
 获取近20个交易日涨幅前400的股票
 """
 
@@ -15,7 +15,7 @@ TUSHARE_TOKEN = '3169a014b7c2f832cb7be1fb33080ccb70284d663397f856042aad5a'
 
 def main():
     print("=" * 50)
-    print("A股20日涨幅榜数据获取")
+    print("A股20日涨幅榜数据获取（Tushare）")
     print("=" * 50)
     
     # 初始化
@@ -36,7 +36,7 @@ def main():
     ts_codes = stocks['ts_code'].tolist()
     print(f"共 {len(ts_codes)} 只股票（不含北交所）")
     
-    # 分批获取日线数据（每批50只）
+    # 分批获取日线数据（每批50只，符合Tushare限制）
     print("\n分批获取日线数据...")
     all_daily_data = []
     batch_size = 50
@@ -47,7 +47,7 @@ def main():
         batch = ts_codes[i:i+batch_size]
         
         if batch_num % 20 == 0:
-            print(f"处理批次 {batch_num}/{total_batches} ({len(batch)} 只股票)...")
+            print(f"处理批次 {batch_num}/{total_batches} ({i+1}-{min(i+batch_size, len(ts_codes))})...")
         
         try:
             df = pro.daily(ts_code=','.join(batch), start_date=start_date, end_date=end_date)
@@ -56,7 +56,7 @@ def main():
         except Exception as e:
             pass
         
-        time.sleep(0.2)  # 避免触发频率限制
+        time.sleep(0.15)  # 避免触发频率限制
     
     if not all_daily_data:
         print("未能获取到任何日线数据")
