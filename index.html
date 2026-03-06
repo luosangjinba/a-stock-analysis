@@ -179,6 +179,8 @@
             max-width: 1600px;
             margin: 0 auto;
             padding: 40px 20px;
+            /* 让内容区域可以撑开 */
+            min-height: calc(100vh - 200px);
         }
 
         .view-container {
@@ -186,6 +188,7 @@
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
+            align-items: flex-start;
         }
 
         .view-container.week-view {
@@ -193,6 +196,7 @@
             overflow-x: auto;
             padding-bottom: 20px;
             justify-content: flex-start;
+            align-items: flex-start;
         }
 
         .day-card {
@@ -204,6 +208,8 @@
             overflow: hidden;
             animation: fadeInUp 0.4s ease-out;
             flex-shrink: 0;
+            /* 高度自适应 */
+            height: auto;
         }
 
         .day-card.no-data {
@@ -245,8 +251,7 @@
 
         .card-body {
             padding: 12px;
-            max-height: 600px;
-            overflow-y: auto;
+            /* 移除固定高度，让内容完全显示 */
         }
 
         .industry-item {
