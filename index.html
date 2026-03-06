@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股二级行业排名</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00B894;
+            --primary-light: #E8F8F5;
+            --bg-page: #F5F6FA;
+            --bg-card: #FFFFFF;
+            --text-primary: #2D3436;
+            --text-secondary: #636E72;
+            --text-muted: #B2BEC3;
+            --rise: #FF4757;
+            --fall: #2ED573;
+            --flat: #B2BEC3;
+            --new: #FFA502;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: var(--bg-page);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), #00CEC9);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--bg-page);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .view-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,184,148,0.3);
+        }
+
+        .date-picker-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-display {
+            padding: 10px 20px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary);
+            min-width: 200px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .date-display:hover {
+            border-color: var(--primary);
+        }
+
+        input[type="date"] {
+            padding: 10px 16px;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(0.5);
+        }
+
+        .quick-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--primary);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .quick-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .view-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .view-container.week-view {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            justify-content: flex-start;
+        }
+
+        .day-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 320px;
+            min-width: 280px;
+            overflow: hidden;
+            animation: fadeInUp 0.4s ease-out;
+            flex-shrink: 0;
+        }
+
+        .day-card.no-data {
+            opacity: 0.5;
+            filter: grayscale(0.5);
+        }
+
+        .day-card.no-data .card-header {
+            background: linear-gradient(135deg, #DFE6E9, #B2BEC3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), #00CEC9);
+            padding: 16px 20px;
+            color: white;
+        }
+
+        .card-date {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .card-weekday {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .card-body {
+            padding: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .industry-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: var(--bg-page);
+            transition: all 0.2s;
+        }
+
+        .industry-item:hover {
+            background: var(--primary-light);
+            transform: translateX(4px);
+        }
+
+        .rank {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .rank.top-3 {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+        }
+
+        .rank.top-10 {
+            background: linear-gradient(135deg, #FF6B6B, #EE5A24);
+            color: white;
+        }
+
+        .rank.other {
+            background: var(--text-muted);
+            color: white;
+        }
+
+        .industry-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .change-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 50px;
+            justify-content: center;
+        }
+
+        .change-badge.rise {
+            background: rgba(255,71,87,0.15);
+            color: var(--rise);
+        }
+
+        .change-badge.fall {
+            background: rgba(46,213,115,0.15);
+            color: var(--fall);
+        }
+
+        .change-badge.flat {
+            background: rgba(178,190,195,0.2);
+            color: var(--flat);
+        }
+
+        .change-badge.new {
+            background: rgba(255,165,2,0.15);
+            color: var(--new);
+        }
+
+        .exit-section {
+            padding: 12px;
+            border-top: 1px dashed var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .exit-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .exit-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: rgba(255,71,87,0.08);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .exit-item::before {
+            content: "✕";
+            color: var(--rise);
+            margin-right: 8px;
+            font-weight: 700;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Scrollbar */
+        .card-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-track {
+            background: var(--bg-page);
+            border-radius: 3px;
+        }
+
+        .card-body::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+
+            .date-picker-section {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .date-display, input[type="date"] {
+                width: 100%;
+            }
+
+            .quick-btns {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .day-card {
+                width: 100%;
+                max-width: 360px;
+            }
+
+            .view-container.week-view {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <span>A股行业风向标</span>
+            </div>
+            <div class="controls">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="day" onclick="switchView('day')">单日</button>
+                    <button class="view-btn" data-view="week" onclick="switchView('week')">周视图</button>
+                </div>
+                <div class="date-picker-section">
+                    <div class="date-display" id="dateDisplay" onclick="showDatePicker()">
+                        2026年3月6日 (周五)
+                    </div>
+                    <input type="date" id="dateInput" onchange="onDateChange(this.value)">
+                </div>
+                <div class="quick-btns">
+                    <button class="quick-btn" onclick="setQuickDate('today')">当日</button>
+                    <button class="quick-btn" onclick="setQuickDate('thisWeek')">当周</button>
+                    <button class="quick-btn" onclick="setQuickDate('lastWeek')">上周</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="view-container" id="viewContainer">
+            <!-- Day cards will be rendered here -->
+        </div>
+    </main>
+
+    <footer class="footer">
+        数据仅供参考，投资有风险，入市需谨慎
+    </footer>
+
+    <script>
+        // State
+        let currentView = 'day';
+        let selectedDate = new Date();
+        
+        // Mock Data Generator
+        const industries = [
+            '电气设备', '元器件', '专用机械', '软件服务', '机械基件', 
+            '化工原料', '半导体', '环境保护', '汽车配件', '通信设备',
+            '石油开采', '家居用品', '煤炭开采', '建筑工程', '纺织',
+            '医疗保健', '食品饮料', '房地产', '金融科技', '新能源',
+            '电池', '航空军工', '铁路基建', '工程机械', '光学光电'
+        ];
+
+        function generateMockData(date, rank = 12) {
+            const shuffled = [...industries].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, rank);
+            
+            // Generate previous ranks for comparison
+            const prevRanks = {};
+            const prevCount = Math.floor(Math.random() * rank);
+            for (let i = 0; i < prevCount; i++) {
+                const prevIndustry = shuffled[Math.floor(Math.random() * industries.length)];
+                prevRanks[prevIndustry] = Math.floor(Math.random() * rank) + 1;
+            }
+            
+            return selected.map((industry, index) => {
+                const currentRank = index + 1;
+                const prevRank = prevRanks[industry];
+                let change = 'flat';
+                let changeText = '─';
+                
+                if (prevRank !== undefined) {
+                    if (currentRank < prevRank) {
+                        change = 'rise';
+                        changeText = '↑' + (prevRank - currentRank);
+                    } else if (currentRank > prevRank) {
+                        change = 'fall';
+                        changeText = '↓' + (currentRank - prevRank);
+                    }
+                } else {
+                    change = 'new';
+                    changeText = '✨新进';
+                }
+                
+                return {
+                    name: industry,
+                    rank: currentRank,
+                    change: change,
+                    changeText: changeText,
+                    isNew: prevRank === undefined
+                };
+            });
+        }
+
+        function getExitIndustries(date, currentData) {
+            const currentNames = currentData.map(d => d.name);
+            const allIndustries = [...industries].sort(() => Math.random() - 0.5);
+            const exits = [];
+            
+            // Randomly generate some exits
+            const exitCount = Math.floor(Math.random() * 4);
+            for (let i = 0; i < exitCount; i++) {
+                if (!currentNames.includes(allIndustries[i])) {
+                    exits.push(allIndustries[i]);
+                }
+            }
+            
+            return exits;
+        }
+
+        // Date Utilities
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}年${month}月${day}日`;
+        }
+
+        function formatWeekRange(date) {
+            const year = date.getFullYear();
+            const weekNum = getWeekNumber(date);
+            const monday = getMonday(date);
+            const friday = new Date(monday);
+            friday.setDate(friday.getDate() + 4);
+            
+            return `${year}年第${weekNum}周 (${formatMD(monday)}-${formatMD(friday)})`;
+        }
+
+        function formatMD(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${month}.${day}`;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        }
+
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function isTradeDay(date) {
+            const day = date.getDay();
+            return day !== 0 && day !== 6;
+        }
+
+        function getWeekDays(date) {
+            const monday = getMonday(date);
+            const days = [];
+            for (let i = 0; i < 5; i++) {
+                const d = new Date(monday);
+                d.setDate(d.getDate() + i);
+                days.push(d);
+            }
+            return days;
+        }
+
+        // Rendering
+        function render() {
+            const container = document.getElementById('viewContainer');
+            const dateInput = document.getElementById('dateInput');
+            
+            // Update date input
+            const dateStr = selectedDate.toISOString().split('T')[0];
+            dateInput.value = dateStr;
+            
+            // Update display
+            updateDateDisplay();
+            
+            if (currentView === 'day') {
+                renderDayView(container);
+            } else {
+                renderWeekView(container);
+            }
+        }
+
+        function renderDayView(container) {
+            container.className = 'view-container';
+            
+            if (!isTradeDay(selectedDate)) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <p>${formatDate(selectedDate)} 是周末休市日</p>
+                        <p>请选择其他日期</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const data = generateMockData(selectedDate);
+            const exits = getExitIndustries(selectedDate, data);
+            
+            container.innerHTML = createDayCard(selectedDate, data, exits);
+        }
+
+        function renderWeekView(container) {
+            container.className = 'view-container week-view';
+            
+            const days = getWeekDays(selectedDate);
+            let html = '';
+            
+            days.forEach((day, index) => {
+                const weekday = ['周一', '周二', '周三', '周四', '周五'][index];
+                
+                if (!isTradeDay(day)) {
+                    html += createDayCard(day, [], [], true);
+                } else {
+                    const data = generateMockData(day);
+                    const exits = getExitIndustries(day, data);
+                    html += createDayCard(day, data, exits, false);
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function createDayCard(date, data, exits, isNoData = false) {
+            const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
+            const dateStr = formatDate(date);
+            
+            let itemsHtml = '';
+            if (data.length > 0) {
+                itemsHtml = data.map(item => {
+                    let rankClass = 'other';
+                    if (item.rank <= 3) rankClass = 'top-3';
+                    else if (item.rank <= 10) rankClass = 'top-10';
+                    
+                    return `
+                        <div class="industry-item">
+                            <div class="rank ${rankClass}">${item.rank}</div>
+                            <div class="industry-name">${item.name}</div>
+                            <div class="change-badge ${item.change}">${item.changeText}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            let exitsHtml = '';
+            if (exits.length > 0 && !isNoData) {
+                exitsHtml = `
+                    <div class="exit-section">
+                        <div class="exit-title">📉 今日退出</div>
+                        ${exits.map(e => `<div class="exit-item">${e}</div>`).join('')}
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="day-card ${isNoData ? 'no-data' : ''}">
+                    <div class="card-header">
+                        <div class="card-date">${formatMD(date)}</div>
+                        <div class="card-weekday">${weekday}</div>
+                    </div>
+                    <div class="card-body">
+                        ${data.length > 0 ? itemsHtml : '<div class="empty-state"><p>暂无数据</p></div>'}
+                        ${exitsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateDateDisplay() {
+            const display = document.getElementById('dateDisplay');
+            const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][selectedDate.getDay()];
+            
+            if (currentView === 'day') {
+                display.innerHTML = `${formatDate(selectedDate)} (${weekday})`;
+            } else {
+                display.innerHTML = formatWeekRange(selectedDate);
+            }
+        }
+
+        // Event Handlers
+        function switchView(view) {
+            currentView = view;
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+            
+            render();
+        }
+
+        function showDatePicker() {
+            document.getElementById('dateInput').showPicker();
+        }
+
+        function onDateChange(value) {
+            if (value) {
+                selectedDate = new Date(value + 'T12:00:00');
+                render();
+            }
+        }
+
+        function setQuickDate(type) {
+            const today = new Date();
+            
+            switch(type) {
+                case 'today':
+                    selectedDate = today;
+                    break;
+                case 'thisWeek':
+                    selectedDate = today;
+                    break;
+                case 'lastWeek':
+                    selectedDate = new Date(today.setDate(today.getDate() - 7));
+                    break;
+            }
+            
+            render();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+        });
+    </script>
+</body>
+</html>
