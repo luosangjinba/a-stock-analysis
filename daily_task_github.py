@@ -59,8 +59,8 @@ def get_stock_prices(trade_date):
     if len(dates) < 20:
         return None
     
-    end_date = dates[-1]
-    start_date = dates[-20]
+    end_date = dates[0]
+    start_date = dates[19]
     
     stock_basic = pro.stock_basic(exchange='', fields='ts_code,symbol')
     adj_factor = pro.adj_factor(trade_date=trade_date)
@@ -104,7 +104,7 @@ def calculate_industry_ranking(stock_data):
     industry_stats.columns = ['平均涨幅', '股票数量', 'count']
     industry_stats = industry_stats.reset_index()
     industry_stats = industry_stats.rename(columns={'industry': '行业名称'})
-    industry_stats = industry_stats.sort_values('平均涨幅', ascending=False).reset_index(drop=True)
+    industry_stats = industry_stats.sort_values('股票数量', ascending=False).reset_index(drop=True)
     industry_stats.insert(0, '排名', range(1, len(industry_stats) + 1))
     
     return industry_stats
@@ -147,7 +147,7 @@ def main():
         send_telegram_message("❌ 无法获取交易日历")
         return
     
-    latest_date = dates[-1]
+    latest_date = dates[0]
     print(f"最新交易日: {latest_date}")
     
     # 检查是否已有数据
