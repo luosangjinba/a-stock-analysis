@@ -8,6 +8,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import warnings
 import time
+import os
 warnings.filterwarnings('ignore')
 
 # Tushare Token
@@ -21,9 +22,9 @@ def main():
     # 初始化
     pro = ts.pro_api(TUSHARE_TOKEN)
     
-    # 获取日期
+    # 获取日期 - 扩大范围确保覆盖20个交易日（批量获取可能丢数据）
     end_date = datetime.now().strftime('%Y%m%d')
-    start_date = (datetime.now() - timedelta(days=35)).strftime('%Y%m%d')
+    start_date = (datetime.now() - timedelta(days=60)).strftime('%Y%m%d')
     
     print(f"日期范围: {start_date} ~ {end_date}")
     
@@ -36,7 +37,7 @@ def main():
     ts_codes = stocks['ts_code'].tolist()
     print(f"共 {len(ts_codes)} 只股票（不含北交所）")
     
-    # 分批获取日线数据（每批50只，符合Tushare限制）
+    # 分批获取日线数据（每批50只）
     print("\n分批获取日线数据...")
     all_daily_data = []
     batch_size = 50
@@ -56,7 +57,7 @@ def main():
         except Exception as e:
             pass
         
-        time.sleep(0.15)  # 避免触发频率限制
+        time.sleep(0.15)
     
     if not all_daily_data:
         print("未能获取到任何日线数据")
@@ -85,12 +86,13 @@ def main():
     # 逐只处理
     for ts_code in ts_codes:
         try:
-            stock_data = daily_df[daily_df['ts_code'] == ts_code]
+            stock_data = daily_df[daily_df['ts_code'] == ts_code].copy()
             
             if len(stock_data) < 20:
                 continue
             
-            # 最新在最后（升序排列）
+            # 按日期排序后取最新和20日前的数据
+            stock_data = stock_data.sort_values('trade_date')
             latest = stock_data.iloc[-1]
             old = stock_data.iloc[-20]
             
@@ -136,11 +138,20 @@ def main():
     # 选择列
     final_df = df_top400[['排名', '股票代码', '股票名称', '最新收盘价', '20日前收盘价', '20日涨幅%', '交易所']]
     
-    # 保存CSV
-    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    # 保存CSV（使用新文件名避免冲突）
+    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400_new.csv"
     final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
     
-    print(f"\n数据已保存到: {output_file}")
+    # 如果旧文件存在，删除并重命名
+    old_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    if os.path.exists(old_file):
+        try:
+            os.remove(old_file)
+        except:
+            pass
+    os.rename(output_file, old_file)
+    
+    print(f"\n数据已保存到: {old_file}")
     print(f"共 {len(final_df)} 只股票")
     
     # 显示前20名
@@ -158,6 +169,16 @@ def main():
     print(f"最小涨幅: {final_df['20日涨幅%'].min():.2f}%")
     print(f"上海交易所: {len(final_df[final_df['交易所']=='SH'])} 只")
     print(f"深圳交易所: {len(final_df[final_df['交易所']=='SZ'])} 只")
+    
+    # 检查301362的排名
+    print("\n" + "=" * 50)
+    print("301362 民爆光电 排名:")
+    print("=" * 50)
+    rank = final_df[final_df['股票代码'] == '301362']
+    if len(rank) > 0:
+        print(rank.to_string(index=False))
+    else:
+        print("未进入前400名")
 
 if __name__ == "__main__":
     main()
