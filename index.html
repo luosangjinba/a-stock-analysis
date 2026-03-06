@@ -477,77 +477,121 @@
     </footer>
 
     <script>
+        // Configuration
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/luosangjinba/a-stock-analysis/master/data';
+        
         // State
         let currentView = 'day';
         let selectedDate = new Date();
-        
-        // Mock Data Generator
-        const industries = [
-            '电气设备', '元器件', '专用机械', '软件服务', '机械基件', 
-            '化工原料', '半导体', '环境保护', '汽车配件', '通信设备',
-            '石油开采', '家居用品', '煤炭开采', '建筑工程', '纺织',
-            '医疗保健', '食品饮料', '房地产', '金融科技', '新能源',
-            '电池', '航空军工', '铁路基建', '工程机械', '光学光电'
-        ];
+        let allData = {};
+        let isLoading = true;
 
-        function generateMockData(date, rank = 12) {
-            const shuffled = [...industries].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, rank);
+        // Load all available data
+        async function loadAllData() {
+            isLoading = true;
+            showLoading();
             
-            // Generate previous ranks for comparison
-            const prevRanks = {};
-            const prevCount = Math.floor(Math.random() * rank);
-            for (let i = 0; i < prevCount; i++) {
-                const prevIndustry = shuffled[Math.floor(Math.random() * industries.length)];
-                prevRanks[prevIndustry] = Math.floor(Math.random() * rank) + 1;
-            }
+            // 获取可用日期列表（硬编码最近20个交易日）
+            const dates = [
+                '20260130', '20260202', '20260203', '20260204', '20260205',
+                '20260206', '20260209', '20260210', '20260211', '20260212',
+                '20260213', '20260224', '20260225', '20260226', '20260227',
+                '20260302', '20260303', '20260304', '20260305', '20260306'
+            ];
             
-            return selected.map((industry, index) => {
-                const currentRank = index + 1;
-                const prevRank = prevRanks[industry];
-                let change = 'flat';
-                let changeText = '─';
-                
-                if (prevRank !== undefined) {
-                    if (currentRank < prevRank) {
-                        change = 'rise';
-                        changeText = '↑' + (prevRank - currentRank);
-                    } else if (currentRank > prevRank) {
-                        change = 'fall';
-                        changeText = '↓' + (currentRank - prevRank);
+            allData = {};
+            
+            // 并行加载所有CSV
+            const promises = dates.map(async (date) => {
+                try {
+                    const response = await fetch(`${GITHUB_RAW_URL}/${date}.csv`);
+                    if (response.ok) {
+                        const text = await response.text();
+                        const data = parseCSV(text);
+                        allData[date] = data;
                     }
-                } else {
-                    change = 'new';
-                    changeText = '✨新进';
+                } catch (e) {
+                    console.log(`无法加载 ${date}:`, e);
                 }
-                
-                return {
-                    name: industry,
-                    rank: currentRank,
-                    change: change,
-                    changeText: changeText,
-                    isNew: prevRank === undefined
-                };
+            });
+            
+            await Promise.all(promises);
+            
+            // 计算排名变化
+            calculateRankChanges();
+            
+            isLoading = false;
+            render();
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',');
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                const obj = {};
+                headers.forEach((h, i) => {
+                    obj[h] = values[i];
+                });
+                return obj;
             });
         }
 
-        function getExitIndustries(date, currentData) {
-            const currentNames = currentData.map(d => d.name);
-            const allIndustries = [...industries].sort(() => Math.random() - 0.5);
-            const exits = [];
+        function calculateRankChanges() {
+            const dates = Object.keys(allData).sort();
             
-            // Randomly generate some exits
-            const exitCount = Math.floor(Math.random() * 4);
-            for (let i = 0; i < exitCount; i++) {
-                if (!currentNames.includes(allIndustries[i])) {
-                    exits.push(allIndustries[i]);
-                }
+            for (let i = 1; i < dates.length; i++) {
+                const prevDate = dates[i - 1];
+                const currDate = dates[i];
+                
+                const prevRanks = {};
+                allData[prevDate].forEach(item => {
+                    prevRanks[item['行业名称']] = parseInt(item['排名']);
+                });
+                
+                allData[currDate].forEach(item => {
+                    const name = item['行业名称'];
+                    const currRank = parseInt(item['排名']);
+                    const prevRank = prevRanks[name];
+                    
+                    if (prevRank === undefined) {
+                        item.change = 'new';
+                        item.changeText = '✨新进';
+                        item.isNew = true;
+                    } else if (currRank < prevRank) {
+                        item.change = 'rise';
+                        item.changeText = '↑' + (prevRank - currRank);
+                    } else if (currRank > prevRank) {
+                        item.change = 'fall';
+                        item.changeText = '↓' + (currRank - prevRank);
+                    } else {
+                        item.change = 'flat';
+                        item.changeText = '─';
+                    }
+                });
             }
-            
-            return exits;
         }
 
-        // Date Utilities
+        function getPrevDateData(dateStr) {
+            const dates = Object.keys(allData).sort();
+            const idx = dates.indexOf(dateStr);
+            if (idx > 0) {
+                return allData[dates[idx - 1]];
+            }
+            return null;
+        }
+
+        function getExitIndustries(dateStr, currentData) {
+            const prevData = getPrevDateData(dateStr);
+            if (!prevData) return [];
+            
+            const currentNames = currentData.map(d => d['行业名称']);
+            const prevNames = prevData.map(d => d['行业名称']);
+            
+            return prevNames.filter(name => !currentNames.includes(name)).slice(0, 5);
+        }
+
         function formatDate(date) {
             const year = date.getFullYear();
             const month = date.getMonth() + 1;
@@ -602,10 +646,32 @@
             return days;
         }
 
+        function dateToStr(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        function showLoading() {
+            const container = document.getElementById('viewContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⏳</div>
+                    <p>正在加载数据...</p>
+                </div>
+            `;
+        }
+
         // Rendering
         function render() {
             const container = document.getElementById('viewContainer');
             const dateInput = document.getElementById('dateInput');
+            
+            if (isLoading) {
+                showLoading();
+                return;
+            }
             
             // Update date input
             const dateStr = selectedDate.toISOString().split('T')[0];
@@ -624,21 +690,25 @@
         function renderDayView(container) {
             container.className = 'view-container';
             
-            if (!isTradeDay(selectedDate)) {
+            const dateStr = dateToStr(selectedDate);
+            const data = allData[dateStr];
+            
+            if (!data) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📅</div>
-                        <p>${formatDate(selectedDate)} 是周末休市日</p>
+                        <p>${formatDate(selectedDate)} 无数据</p>
                         <p>请选择其他日期</p>
                     </div>
                 `;
                 return;
             }
             
-            const data = generateMockData(selectedDate);
-            const exits = getExitIndustries(selectedDate, data);
+            // 取前12名
+            const topData = data.slice(0, 12);
+            const exits = getExitIndustries(dateStr, data);
             
-            container.innerHTML = createDayCard(selectedDate, data, exits);
+            container.innerHTML = createDayCard(selectedDate, topData, exits);
         }
 
         function renderWeekView(container) {
@@ -648,14 +718,15 @@
             let html = '';
             
             days.forEach((day, index) => {
-                const weekday = ['周一', '周二', '周三', '周四', '周五'][index];
+                const dateStr = dateToStr(day);
+                const data = allData[dateStr];
                 
-                if (!isTradeDay(day)) {
+                if (!data) {
                     html += createDayCard(day, [], [], true);
                 } else {
-                    const data = generateMockData(day);
-                    const exits = getExitIndustries(day, data);
-                    html += createDayCard(day, data, exits, false);
+                    const topData = data.slice(0, 12);
+                    const exits = getExitIndustries(dateStr, data);
+                    html += createDayCard(day, topData, exits, false);
                 }
             });
             
@@ -664,19 +735,19 @@
 
         function createDayCard(date, data, exits, isNoData = false) {
             const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
-            const dateStr = formatDate(date);
             
             let itemsHtml = '';
             if (data.length > 0) {
                 itemsHtml = data.map(item => {
                     let rankClass = 'other';
-                    if (item.rank <= 3) rankClass = 'top-3';
-                    else if (item.rank <= 10) rankClass = 'top-10';
+                    const rank = parseInt(item['排名']);
+                    if (rank <= 3) rankClass = 'top-3';
+                    else if (rank <= 10) rankClass = 'top-10';
                     
                     return `
                         <div class="industry-item">
-                            <div class="rank ${rankClass}">${item.rank}</div>
-                            <div class="industry-name">${item.name}</div>
+                            <div class="rank ${rankClass}">${rank}</div>
+                            <div class="industry-name">${item['行业名称']}</div>
                             <div class="change-badge ${item.change}">${item.changeText}</div>
                         </div>
                     `;
@@ -760,7 +831,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            render();
+            loadAllData();
         });
     </script>
 </body>
