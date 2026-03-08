@@ -41,6 +41,27 @@ def get_trade_dates(start_date, end_date):
     df = pro.trade_cal(exchange='SSE', start_date=start_date, end_date=end_date, is_open='1')
     return df['cal_date'].tolist()
 
+def is_trade_day(date_str=None):
+    """判断指定日期是否为A股交易日
+    
+    Args:
+        date_str: 日期字符串，格式 YYYYMMDD，默认为今天
+    
+    Returns:
+        True 是交易日，False 不是交易日
+    """
+    if date_str is None:
+        date_str = datetime.now().strftime('%Y%m%d')
+    
+    # 获取前后5天的交易日历
+    check_date = datetime.strptime(date_str, '%Y%m%d')
+    start_date = (check_date - timedelta(days=5)).strftime('%Y%m%d')
+    end_date = (check_date + timedelta(days=5)).strftime('%Y%m%d')
+    
+    trade_dates = get_trade_dates(start_date, end_date)
+    
+    return date_str in trade_dates
+
 def get_stock_industry():
     """获取股票行业分类"""
     pro = ts.pro_api(TUSHARE_TOKEN)
@@ -135,6 +156,16 @@ def main():
     print("="*50)
     print("A股行业数据定时任务开始 (GitHub Actions)")
     print("="*50)
+    
+    # 检查今天是否为交易日
+    today_str = datetime.now().strftime('%Y%m%d')
+    if not is_trade_day(today_str):
+        print(f"今天 ({today_str}) 不是A股交易日，跳过执行")
+        # 可以选择发送通知，也可以不发送
+        # send_telegram_message(f"📅 今天 ({today_str}) 不是交易日，数据已跳过")
+        return
+    
+    print(f"今天 ({today_str}) 是A股交易日，继续执行...")
     
     # 获取最新交易日
     today = datetime.now()

@@ -3,841 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A股二级行业排名</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>A股行业数据 - 每日更新</title>
     <style>
-        :root {
-            --primary: #00B894;
-            --primary-light: #E8F8F5;
-            --bg-page: #F5F6FA;
-            --bg-card: #FFFFFF;
-            --text-primary: #2D3436;
-            --text-secondary: #636E72;
-            --text-muted: #B2BEC3;
-            --rise: #FF4757;
-            --fall: #2ED573;
-            --flat: #B2BEC3;
-            --new: #FFA502;
-            --shadow: 0 4px 20px rgba(0,0,0,0.08);
-            --radius: 12px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: var(--bg-page);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
-            color: var(--text-primary);
-        }
-
-        /* Header */
-        .header {
-            background: var(--bg-card);
-            padding: 20px 40px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), #00CEC9);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .view-toggle {
-            display: flex;
-            background: var(--bg-page);
-            border-radius: 8px;
-            padding: 4px;
-        }
-
-        .view-btn {
-            padding: 8px 20px;
-            border: none;
-            background: transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-        }
-
-        .view-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0,184,148,0.3);
-        }
-
-        .date-picker-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .date-display {
-            padding: 10px 20px;
-            background: var(--primary-light);
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--primary);
-            min-width: 200px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .date-display:hover {
-            border-color: var(--primary);
-        }
-
-        input[type="date"] {
-            padding: 10px 16px;
-            border: 2px solid var(--primary);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            cursor: pointer;
-        }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            filter: invert(0.5);
-        }
-
-        .quick-btns {
-            display: flex;
-            gap: 8px;
-        }
-
-        .quick-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--primary);
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--primary);
-            transition: all 0.2s;
-        }
-
-        .quick-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .quick-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Main Content */
-        .main {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            /* 让内容区域可以撑开 */
-            min-height: calc(100vh - 200px);
-        }
-
-        .view-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: flex-start;
-        }
-
-        .view-container.week-view {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            padding-bottom: 20px;
-            justify-content: flex-start;
-            align-items: flex-start;
-        }
-
-        .day-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            width: 320px;
-            min-width: 280px;
-            overflow: hidden;
-            animation: fadeInUp 0.4s ease-out;
-            flex-shrink: 0;
-            /* 高度自适应 */
-            height: auto;
-        }
-
-        .day-card.no-data {
-            opacity: 0.5;
-            filter: grayscale(0.5);
-        }
-
-        .day-card.no-data .card-header {
-            background: linear-gradient(135deg, #DFE6E9, #B2BEC3);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary), #00CEC9);
-            padding: 16px 20px;
-            color: white;
-        }
-
-        .card-date {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .card-weekday {
-            font-size: 13px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-
-        .card-body {
-            padding: 12px;
-            /* 移除固定高度，让内容完全显示 */
-        }
-
-        .industry-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: var(--bg-page);
-            transition: all 0.2s;
-        }
-
-        .industry-item:hover {
-            background: var(--primary-light);
-            transform: translateX(4px);
-        }
-
-        .rank {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
-        .rank.top-3 {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: white;
-        }
-
-        .rank.top-10 {
-            background: linear-gradient(135deg, #FF6B6B, #EE5A24);
-            color: white;
-        }
-
-        .rank.other {
-            background: var(--text-muted);
-            color: white;
-        }
-
-        .industry-name {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .change-badge {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            min-width: 50px;
-            justify-content: center;
-        }
-
-        .change-badge.rise {
-            background: rgba(255,71,87,0.15);
-            color: var(--rise);
-        }
-
-        .change-badge.fall {
-            background: rgba(46,213,115,0.15);
-            color: var(--fall);
-        }
-
-        .change-badge.flat {
-            background: rgba(178,190,195,0.2);
-            color: var(--flat);
-        }
-
-        .change-badge.new {
-            background: rgba(255,165,2,0.15);
-            color: var(--new);
-        }
-
-        .exit-section {
-            padding: 12px;
-            border-top: 1px dashed var(--text-muted);
-            margin-top: 8px;
-        }
-
-        .exit-title {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .exit-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            background: rgba(255,71,87,0.08);
-            border-radius: 6px;
-            margin-bottom: 4px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .exit-item::before {
-            content: "✕";
-            color: var(--rise);
-            margin-right: 8px;
-            font-weight: 700;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        /* Scrollbar */
-        .card-body::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .card-body::-webkit-scrollbar-track {
-            background: var(--bg-page);
-            border-radius: 3px;
-        }
-
-        .card-body::-webkit-scrollbar-thumb {
-            background: var(--text-muted);
-            border-radius: 3px;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
             padding: 20px;
-            color: var(--text-muted);
-            font-size: 12px;
+            color: #fff;
         }
-
-        /* Mobile */
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #888; font-size: 1.1em; }
+        .update-time { color: #4ade80; margin-top: 10px; }
+        
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .date-select {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #1e1e3f;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: #1e1e3f;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-value { font-size: 2em; font-weight: bold; color: #4ade80; }
+        .stat-label { color: #888; margin-top: 5px; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e1e3f;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            background: #16213e;
+            font-weight: 600;
+            color: #4ade80;
+        }
+        tr:hover { background: #252550; }
+        .rank { 
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background: #333;
+            font-weight: bold;
+        }
+        .rank-1 { background: #ffd700; color: #000; }
+        .rank-2 { background: #c0c0c0; color: #000; }
+        .rank-3 { background: #cd7f32; color: #000; }
+        
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+        
         @media (max-width: 768px) {
-            .header {
-                padding: 16px;
-            }
-
-            .header-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .controls {
-                justify-content: center;
-            }
-
-            .date-picker-section {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .date-display, input[type="date"] {
-                width: 100%;
-            }
-
-            .quick-btns {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .day-card {
-                width: 100%;
-                max-width: 360px;
-            }
-
-            .view-container.week-view {
-                justify-content: flex-start;
-            }
+            h1 { font-size: 1.8em; }
+            th, td { padding: 10px; font-size: 14px; }
+            .filters { flex-direction: column; align-items: center; }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">📊</div>
-                <span>A股行业风向标</span>
-            </div>
-            <div class="controls">
-                <div class="view-toggle">
-                    <button class="view-btn active" data-view="day" onclick="switchView('day')">单日</button>
-                    <button class="view-btn" data-view="week" onclick="switchView('week')">周视图</button>
-                </div>
-                <div class="date-picker-section">
-                    <div class="date-display" id="dateDisplay" onclick="showDatePicker()">
-                        2026年3月6日 (周五)
-                    </div>
-                    <input type="date" id="dateInput" onchange="onDateChange(this.value)">
-                </div>
-                <div class="quick-btns">
-                    <button class="quick-btn" onclick="setQuickDate('today')">当日</button>
-                    <button class="quick-btn" onclick="setQuickDate('thisWeek')">当周</button>
-                    <button class="quick-btn" onclick="setQuickDate('lastWeek')">上周</button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="main">
-        <div class="view-container" id="viewContainer">
-            <!-- Day cards will be rendered here -->
-        </div>
-    </main>
-
-    <footer class="footer">
-        数据仅供参考，投资有风险，入市需谨慎
-    </footer>
-
-    <script>
-        // Configuration
-        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/luosangjinba/a-stock-analysis/master/data';
+    <div class="container">
+        <header>
+            <h1>📊 A股行业数据</h1>
+            <p class="subtitle">每日行业涨幅排行 · 前复权计算</p>
+            <p class="update-time" id="updateTime">加载中...</p>
+        </header>
         
-        // State
-        let currentView = 'day';
-        let selectedDate = new Date();
+        <div class="filters">
+            <select class="date-select" id="dateSelect">
+                <option value="">选择日期</option>
+            </select>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="industryCount">-</div>
+                <div class="stat-label">行业数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgChange">-</div>
+                <div class="stat-label">平均涨幅</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="topIndustry">-</div>
+                <div class="stat-label">涨幅最高行业</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>行业名称</th>
+                    <th>平均涨幅</th>
+                    <th>股票数量</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="4" class="loading">加载中...</td></tr>
+            </tbody>
+        </table>
+        
+        <footer>
+            <p>数据来源: Tushare · 自动更新</p>
+            <p>由 GitHub Actions 驱动</p>
+        </footer>
+    </div>
+    
+    <script>
+        const DATA_DIR = 'data';
         let allData = {};
-        let isLoading = true;
-
-        // Load all available data
-        async function loadAllData() {
-            isLoading = true;
-            showLoading();
-            
-            // 获取可用日期列表（硬编码最近20个交易日）
-            const dates = [
-                '20260130', '20260202', '20260203', '20260204', '20260205',
-                '20260206', '20260209', '20260210', '20260211', '20260212',
-                '20260213', '20260224', '20260225', '20260226', '20260227',
-                '20260302', '20260303', '20260304', '20260305', '20260306'
-            ];
-            
-            allData = {};
-            
-            // 并行加载所有CSV
-            const promises = dates.map(async (date) => {
-                try {
-                    const response = await fetch(`${GITHUB_RAW_URL}/${date}.csv`);
-                    if (response.ok) {
-                        const text = await response.text();
-                        const data = parseCSV(text);
-                        allData[date] = data;
-                    }
-                } catch (e) {
-                    console.log(`无法加载 ${date}:`, e);
+        
+        async function loadDates() {
+            try {
+                // 获取所有数据文件
+                const response = await fetch(DATA_DIR + '/');
+                const text = await response.text();
+                const dates = [...text.matchAll(/(\d{8}\.csv)/g)].map(m => m[1].replace('.csv', ''));
+                
+                if (dates.length === 0) {
+                    document.getElementById('dateSelect').innerHTML = '<option value="">暂无数据</option>';
+                    return;
                 }
-            });
-            
-            await Promise.all(promises);
-            
-            // 计算排名变化
-            calculateRankChanges();
-            
-            isLoading = false;
-            render();
+                
+                // 按日期排序（最新的在前面）
+                dates.sort((a, b) => b - a);
+                
+                const select = document.getElementById('dateSelect');
+                dates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = formatDate(date);
+                    select.appendChild(option);
+                });
+                
+                // 加载最新日期的数据
+                if (dates.length > 0) {
+                    select.value = dates[0];
+                    await loadData(dates[0]);
+                }
+            } catch (error) {
+                console.error('加载日期列表失败:', error);
+            }
         }
-
+        
+        async function loadData(date) {
+            try {
+                const response = await fetch(DATA_DIR + '/' + date + '.csv');
+                const text = await response.text();
+                const data = parseCSV(text);
+                
+                allData[date] = data;
+                renderTable(data);
+                renderStats(data, date);
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="4" class="loading">加载失败</td></tr>';
+            }
+        }
+        
         function parseCSV(text) {
             const lines = text.trim().split('\n');
-            const headers = lines[0].split(',');
+            const headers = lines[0].split(',').map(h => h.replace(/"/g, ''));
+            const data = [];
             
-            return lines.slice(1).map(line => {
-                const values = line.split(',');
-                const obj = {};
-                headers.forEach((h, i) => {
-                    obj[h] = values[i];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+                const row = {};
+                headers.forEach((h, idx) => {
+                    row[h] = values[idx];
                 });
-                return obj;
-            });
-        }
-
-        function calculateRankChanges() {
-            const dates = Object.keys(allData).sort();
+                data.push(row);
+            }
             
-            for (let i = 1; i < dates.length; i++) {
-                const prevDate = dates[i - 1];
-                const currDate = dates[i];
+            return data;
+        }
+        
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = data.map(row => {
+                const rank = parseInt(row['排名']);
+                const change = parseFloat(row['平均涨幅']);
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const changePrefix = change >= 0 ? '+' : '';
                 
-                const prevRanks = {};
-                allData[prevDate].forEach(item => {
-                    prevRanks[item['行业名称']] = parseInt(item['排名']);
-                });
-                
-                allData[currDate].forEach(item => {
-                    const name = item['行业名称'];
-                    const currRank = parseInt(item['排名']);
-                    const prevRank = prevRanks[name];
-                    
-                    if (prevRank === undefined) {
-                        item.change = 'new';
-                        item.changeText = '✨新进';
-                        item.isNew = true;
-                    } else if (currRank < prevRank) {
-                        item.change = 'rise';
-                        item.changeText = '↑' + (prevRank - currRank);
-                    } else if (currRank > prevRank) {
-                        item.change = 'fall';
-                        item.changeText = '↓' + (currRank - prevRank);
-                    } else {
-                        item.change = 'flat';
-                        item.changeText = '─';
-                    }
-                });
-            }
-        }
-
-        function getPrevDateData(dateStr) {
-            const dates = Object.keys(allData).sort();
-            const idx = dates.indexOf(dateStr);
-            if (idx > 0) {
-                return allData[dates[idx - 1]];
-            }
-            return null;
-        }
-
-        function getExitIndustries(dateStr, currentData) {
-            const prevData = getPrevDateData(dateStr);
-            if (!prevData) return [];
-            
-            const currentNames = currentData.map(d => d['行业名称']);
-            const prevNames = prevData.map(d => d['行业名称']);
-            
-            return prevNames.filter(name => !currentNames.includes(name)).slice(0, 5);
-        }
-
-        function formatDate(date) {
-            const year = date.getFullYear();
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            return `${year}年${month}月${day}日`;
-        }
-
-        function formatWeekRange(date) {
-            const year = date.getFullYear();
-            const weekNum = getWeekNumber(date);
-            const monday = getMonday(date);
-            const friday = new Date(monday);
-            friday.setDate(friday.getDate() + 4);
-            
-            return `${year}年第${weekNum}周 (${formatMD(monday)}-${formatMD(friday)})`;
-        }
-
-        function formatMD(date) {
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            return `${month}.${day}`;
-        }
-
-        function getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-        }
-
-        function getMonday(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(d.setDate(diff));
-        }
-
-        function isTradeDay(date) {
-            const day = date.getDay();
-            return day !== 0 && day !== 6;
-        }
-
-        function getWeekDays(date) {
-            const monday = getMonday(date);
-            const days = [];
-            for (let i = 0; i < 5; i++) {
-                const d = new Date(monday);
-                d.setDate(d.getDate() + i);
-                days.push(d);
-            }
-            return days;
-        }
-
-        function dateToStr(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}${month}${day}`;
-        }
-
-        function showLoading() {
-            const container = document.getElementById('viewContainer');
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">⏳</div>
-                    <p>正在加载数据...</p>
-                </div>
-            `;
-        }
-
-        // Rendering
-        function render() {
-            const container = document.getElementById('viewContainer');
-            const dateInput = document.getElementById('dateInput');
-            
-            if (isLoading) {
-                showLoading();
-                return;
-            }
-            
-            // Update date input
-            const dateStr = selectedDate.toISOString().split('T')[0];
-            dateInput.value = dateStr;
-            
-            // Update display
-            updateDateDisplay();
-            
-            if (currentView === 'day') {
-                renderDayView(container);
-            } else {
-                renderWeekView(container);
-            }
-        }
-
-        function renderDayView(container) {
-            container.className = 'view-container';
-            
-            const dateStr = dateToStr(selectedDate);
-            const data = allData[dateStr];
-            
-            if (!data) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📅</div>
-                        <p>${formatDate(selectedDate)} 无数据</p>
-                        <p>请选择其他日期</p>
-                    </div>
+                return `
+                    <tr>
+                        <td><span class="rank rank-${rank <= 3 ? rank : ''}">${rank}</span></td>
+                        <td>${row['行业名称'] || '-'}</td>
+                        <td class="${changeClass}">${changePrefix}${change}%</td>
+                        <td>${row['股票数量'] || '-'}</td>
+                    </tr>
                 `;
-                return;
-            }
-            
-            // 取前12名
-            const topData = data.slice(0, 12);
-            const exits = getExitIndustries(dateStr, data);
-            
-            container.innerHTML = createDayCard(selectedDate, topData, exits);
+            }).join('');
         }
-
-        function renderWeekView(container) {
-            container.className = 'view-container week-view';
+        
+        function renderStats(data, date) {
+            document.getElementById('updateTime').textContent = '最后更新: ' + formatDate(date);
+            document.getElementById('industryCount').textContent = data.length;
             
-            const days = getWeekDays(selectedDate);
-            let html = '';
+            const changes = data.map(d => parseFloat(d['平均涨幅'])).filter(c => !isNaN(c));
+            const avg = changes.length > 0 ? (changes.reduce((a, b) => a + b, 0) / changes.length).toFixed(2) : 0;
+            document.getElementById('avgChange').textContent = (avg >= 0 ? '+' : '') + avg + '%';
+            document.getElementById('avgChange').className = 'stat-value ' + (avg >= 0 ? 'positive' : 'negative');
             
-            days.forEach((day, index) => {
-                const dateStr = dateToStr(day);
-                const data = allData[dateStr];
-                
-                if (!data) {
-                    html += createDayCard(day, [], [], true);
-                } else {
-                    const topData = data.slice(0, 12);
-                    const exits = getExitIndustries(dateStr, data);
-                    html += createDayCard(day, topData, exits, false);
-                }
-            });
-            
-            container.innerHTML = html;
-        }
-
-        function createDayCard(date, data, exits, isNoData = false) {
-            const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
-            
-            let itemsHtml = '';
             if (data.length > 0) {
-                itemsHtml = data.map(item => {
-                    let rankClass = 'other';
-                    const rank = parseInt(item['排名']);
-                    if (rank <= 3) rankClass = 'top-3';
-                    else if (rank <= 10) rankClass = 'top-10';
-                    
-                    return `
-                        <div class="industry-item">
-                            <div class="rank ${rankClass}">${rank}</div>
-                            <div class="industry-name">${item['行业名称']}</div>
-                            <div class="change-badge ${item.change}">${item.changeText}</div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            let exitsHtml = '';
-            if (exits.length > 0 && !isNoData) {
-                exitsHtml = `
-                    <div class="exit-section">
-                        <div class="exit-title">📉 今日退出</div>
-                        ${exits.map(e => `<div class="exit-item">${e}</div>`).join('')}
-                    </div>
-                `;
-            }
-            
-            return `
-                <div class="day-card ${isNoData ? 'no-data' : ''}">
-                    <div class="card-header">
-                        <div class="card-date">${formatMD(date)}</div>
-                        <div class="card-weekday">${weekday}</div>
-                    </div>
-                    <div class="card-body">
-                        ${data.length > 0 ? itemsHtml : '<div class="empty-state"><p>暂无数据</p></div>'}
-                        ${exitsHtml}
-                    </div>
-                </div>
-            `;
-        }
-
-        function updateDateDisplay() {
-            const display = document.getElementById('dateDisplay');
-            const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][selectedDate.getDay()];
-            
-            if (currentView === 'day') {
-                display.innerHTML = `${formatDate(selectedDate)} (${weekday})`;
-            } else {
-                display.innerHTML = formatWeekRange(selectedDate);
+                document.getElementById('topIndustry').textContent = data[0]['行业名称'] || '-';
             }
         }
-
-        // Event Handlers
-        function switchView(view) {
-            currentView = view;
-            
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.view === view);
-            });
-            
-            render();
+        
+        function formatDate(dateStr) {
+            return dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8);
         }
-
-        function showDatePicker() {
-            document.getElementById('dateInput').showPicker();
-        }
-
-        function onDateChange(value) {
-            if (value) {
-                selectedDate = new Date(value + 'T12:00:00');
-                render();
+        
+        document.getElementById('dateSelect').addEventListener('change', async (e) => {
+            const date = e.target.value;
+            if (date && allData[date]) {
+                renderTable(allData[date]);
+                renderStats(allData[date], date);
+            } else if (date) {
+                await loadData(date);
             }
-        }
-
-        function setQuickDate(type) {
-            const today = new Date();
-            
-            switch(type) {
-                case 'today':
-                    selectedDate = today;
-                    break;
-                case 'thisWeek':
-                    selectedDate = today;
-                    break;
-                case 'lastWeek':
-                    selectedDate = new Date(today.setDate(today.getDate() - 7));
-                    break;
-            }
-            
-            render();
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllData();
         });
+        
+        // 初始化
+        loadDates();
     </script>
 </body>
 </html>
