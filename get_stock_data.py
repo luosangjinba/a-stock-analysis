@@ -7,7 +7,12 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 import warnings
+import os
+
 warnings.filterwarnings('ignore')
+
+# 使用相对路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def generate_stock_codes():
     """生成A股股票代码列表（不包含北交所）"""
@@ -103,8 +108,8 @@ def main():
     # 选择需要的列并排序
     final_df = df_top400[['排名', '股票代码', '最新收盘价', '20日前收盘价', '20日涨幅%', '交易所']]
     
-    # 保存CSV
-    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    # 保存CSV - 使用相对路径
+    output_file = os.path.join(SCRIPT_DIR, "a_stock_top400.csv")
     final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
     
     print(f"\n数据已保存到: {output_file}")

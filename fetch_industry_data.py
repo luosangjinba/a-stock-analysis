@@ -9,11 +9,14 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
-# Tushare Token
-TUSHARE_TOKEN = '3169a014b7c2f832cb7be1fb33080ccb70284d663397f856042aad5a'
+# Tushare Token - 请设置为环境变量 TUSHARE_TOKEN
+import os
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '')
 
-# 数据目录
-DATA_DIR = "G:/MiniMAX-agent/project/a_stock_analysis/data"
+# 数据目录 - 使用相对路径
+import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(SCRIPT_DIR, 'data')
 
 def get_trade_dates(start_date, end_date):
     """获取交易日历"""

@@ -9,7 +9,11 @@ from datetime import datetime, timedelta
 import warnings
 import time
 import os
+
 warnings.filterwarnings('ignore')
+
+# 使用相对路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def get_stock_code(code):
     """将股票代码转换为akshare格式"""
@@ -120,12 +124,12 @@ def main():
     # 选择列
     final_df = df_top400[['排名', '股票代码', '股票名称', '最新收盘价', '20日前收盘价', '20日涨幅%', '交易所']]
     
-    # 保存CSV
-    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400_akshare.csv"
+    # 保存CSV - 使用相对路径
+    output_file = os.path.join(SCRIPT_DIR, "a_stock_top400_akshare.csv")
     final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
     
     # 替换旧文件
-    old_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    old_file = os.path.join(SCRIPT_DIR, "a_stock_top400.csv")
     if os.path.exists(old_file):
         try:
             os.remove(old_file)

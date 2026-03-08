@@ -5,18 +5,23 @@ A股20日涨幅榜 - 添加申万二级行业分类
 import tushare as ts
 import pandas as pd
 import warnings
+import os
+
 warnings.filterwarnings('ignore')
 
-# Tushare Token
-TUSHARE_TOKEN = '3169a014b7c2f832cb7be1fb33080ccb70284d663397f856042aad5a'
+# Tushare Token - 请设置为环境变量 TUSHARE_TOKEN
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '')
+
+# 使用相对路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def main():
     print("=" * 50)
     print("添加申万二级行业分类")
     print("=" * 50)
     
-    # 读取现有数据
-    input_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    # 读取现有数据 - 使用相对路径
+    input_file = os.path.join(SCRIPT_DIR, "a_stock_top400.csv")
     df = pd.read_csv(input_file)
     print(f"共 {len(df)} 只股票")
     
@@ -41,8 +46,8 @@ def main():
     # 重命名列
     df = df.rename(columns={'industry': '申万二级行业'})
     
-    # 保存带行业的数据
-    output_file1 = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400_with_industry.csv"
+    # 保存带行业的数据 - 使用相对路径
+    output_file1 = os.path.join(SCRIPT_DIR, "a_stock_top400_with_industry.csv")
     df.to_csv(output_file1, index=False, encoding='utf-8-sig')
     print(f"\n已保存带行业的CSV: {output_file1}")
     
@@ -56,8 +61,8 @@ def main():
     top12 = industry_count.head(12).copy()
     top12.insert(0, '排名', range(1, 13))
     
-    # 保存行业统计CSV
-    output_file2 = "G:/MiniMAX-agent/project/a_stock_analysis/industry_top12.csv"
+    # 保存行业统计CSV - 使用相对路径
+    output_file2 = os.path.join(SCRIPT_DIR, "industry_top12.csv")
     top12.to_csv(output_file2, index=False, encoding='utf-8-sig')
     print(f"已保存行业统计CSV: {output_file2}")
     

@@ -13,12 +13,17 @@ import requests
 import warnings
 warnings.filterwarnings('ignore')
 
-# 配置
-TUSHARE_TOKEN = '3169a014b7c2f832cb7be1fb33080ccb70284d663397f856042aad5a'
-TELEGRAM_TOKEN = '8778530122:AAE9wK2Yu0uIGAPxvMOnvRzh_slkJ7BdLn4'
-TELEGRAM_CHAT_ID = '6276858705'
-DATA_DIR = "G:/MiniMAX-agent/project/a_stock_analysis/data"
-GIT_DIR = "G:/MiniMAX-agent/project/a_stock_analysis"
+# 配置 - 请设置为环境变量
+import os
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '')
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+import os
+
+# 数据目录 - 使用相对路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(SCRIPT_DIR, 'data')
+GIT_DIR = SCRIPT_DIR
 GIT_EXEC = r"C:\Program Files\Git\bin\git.exe"
 
 def send_telegram_message(message):

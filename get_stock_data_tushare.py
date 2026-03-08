@@ -9,10 +9,14 @@ from datetime import datetime, timedelta
 import warnings
 import time
 import os
+
 warnings.filterwarnings('ignore')
 
-# Tushare Token
-TUSHARE_TOKEN = '3169a014b7c2f832cb7be1fb33080ccb70284d663397f856042aad5a'
+# Tushare Token - 请设置为环境变量 TUSHARE_TOKEN
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '')
+
+# 使用相对路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def main():
     print("=" * 50)
@@ -170,12 +174,12 @@ def main():
     # 选择列
     final_df = df_top400[['排名', '股票代码', '股票名称', '最新收盘价', '20日前收盘价', '20日涨幅%', '交易所']]
     
-    # 保存CSV
-    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400_qfq.csv"
+    # 保存CSV - 使用相对路径
+    output_file = os.path.join(SCRIPT_DIR, "a_stock_top400_qfq.csv")
     final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
     
     # 替换旧文件
-    old_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    old_file = os.path.join(SCRIPT_DIR, "a_stock_top400.csv")
     if os.path.exists(old_file):
         try:
             os.remove(old_file)

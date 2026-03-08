@@ -3,8 +3,9 @@ A股20日涨幅榜数据获取脚本（使用Ashare - 优化版）
 获取近20个交易日涨幅前400的股票
 """
 
-import sys
-sys.path.insert(0, 'G:/MiniMAX-agent/project/a_stock_analysis')
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from Ashare import *
 import pandas as pd
@@ -109,8 +110,8 @@ def main():
     # 选择需要的列并排序
     final_df = df_top400[['排名', '股票代码', '股票名称', '最新收盘价', '20日前收盘价', '20日涨幅%', '交易所']]
     
-    # 保存CSV
-    output_file = "G:/MiniMAX-agent/project/a_stock_analysis/a_stock_top400.csv"
+    # 保存CSV - 使用相对路径
+    output_file = os.path.join(SCRIPT_DIR, "a_stock_top400.csv")
     final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
     
     print(f"\n数据已保存到: {output_file}")
