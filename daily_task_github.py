@@ -224,7 +224,7 @@ def main():
             if new_enter:
                 msg += f"\n✨ 新进Top 10: {', '.join(new_enter)}"
         
-        msg += f"\n\n🌐 查看网站: (请访问GitHub Pages)"
+        msg += f"\n\n🌐 查看网站: https://luosangjinba.github.io/a-stock-analysis/"
         
         send_telegram_message(msg)
     
